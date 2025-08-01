@@ -2,8 +2,19 @@ import React, { useState } from "react";
 import { Link } from "react-router";
 import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FcGoogle } from "react-icons/fc";
 
 const SignUpPage = () => {
+  const auth = getAuth();
+  const provider = new GoogleAuthProvider();
   let [email, setEmail] = useState("");
   let [password, setPassword] = useState("");
   let [emailerr, setEmailerr] = useState("");
@@ -26,13 +37,46 @@ const SignUpPage = () => {
     } else if (
       !/^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/gim.test(email)
     ) {
-      setEmailerr("Invalid Email");
+      toast("Invalid credantial");
     }
     if (!password) {
       setPassworderr("Password is required");
     }
-  };
+    if (email && password) {
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Signed in
+          console.log(userCredential);
+          const user = userCredential.user;
+          // ...
+        })
+        .catch((error) => {
+          console.log("Error Code:", error.code);
 
+          if (error.code === "auth/invalid-credential") {
+            toast.error("Invalid email or password");
+          }
+
+          const errorCode = error.code;
+          const errorMessage = error.message;
+        });
+    }
+  };
+  const handlGoogleLogin = () => {
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        // IdP data available using getAdditionalUserInfo(result)
+        // ...
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
   return (
     <div className="w-[1250p[px] flex justify-center gap-[69px]">
       <div className="w-1/2 flex justify-end items-center">
@@ -40,6 +84,14 @@ const SignUpPage = () => {
           <h1 className="text-[34.4px] font-bold text-two">
             Login to your account!
           </h1>
+
+          <button onClick={handlGoogleLogin} className="pt-7 pb-8">
+            <div className=" flex justify-center items-center gap-2 border-1 p-6 rounded-2xl cursor-pointer">
+              <FcGoogle className="text-5" />
+
+              <p>Login with Google</p>
+            </div>
+          </button>
 
           <div className="relative mt-[32px]">
             <label
@@ -90,6 +142,7 @@ const SignUpPage = () => {
             onClick={handleSubmit}
             className="w-[368px] h-[67px] text-white bg-one rounded-xl mt-[51px] mb-[35px] cursor-pointer"
           >
+            <ToastContainer />
             Login to Continue
           </button>
 
